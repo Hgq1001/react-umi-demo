@@ -1,5 +1,5 @@
+const Routes = require('./src/routes');
 
-// ref: https://umijs.org/config/
 export default {
   treeShaking: true,
   plugins: [
@@ -8,9 +8,8 @@ export default {
       antd: true,
       dva: true,
       dynamicImport: false,
-      title: 'umi-demo',
+      title: 'what fuck',
       dll: false,
-      
       routes: {
         exclude: [
           /models\//,
@@ -22,4 +21,5 @@ export default {
       },
     }],
   ],
-}
+  routes: Routes,
+};
