@@ -2,7 +2,7 @@
  * @Author:hgq
  * @Describe: 首页
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect } from 'dva';
 import styles from './Home.css';
 import Calendar from '@/components/Calendar/Calendar';
@@ -16,6 +16,12 @@ const Home = ({ dispatch, calendarModel }) => {
   const changeCalendarVisible = () => {
     setCalendarVisible(!calendarVisible);
   };
+
+  useEffect(() => {
+    console.log('every-->', utils.every([1, 2, 3], (item) => item > 2));
+    console.log('some-->', utils.some([1, 2, 3], (item) => item > 2));
+    console.log('forEachObject-->', utils.forEachObject({ name: '蛋糕', age: 1 }, (key, value) => console.log(key + '：' + value)));
+  });
 
   return (
     <div className={styles.home}>

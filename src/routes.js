@@ -8,7 +8,7 @@ const routes = [
     component: '../layouts',
     routes: [
       { path: '/', redirect: '/home' },
-      { path: '/home', component: './Home' },
+      { path: '/home', component: './Home/Home' },
     ],
   },
 ];
