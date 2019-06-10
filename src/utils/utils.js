@@ -129,7 +129,7 @@ export const sortBy = (property) => {
  */
 export const tap = (value) =>
   (fn) => (
-    typeof(fn) === 'function' && fn(value)
+    typeof (fn) === 'function' && fn(value)
   );
 
 /**
@@ -144,6 +144,7 @@ export const once = (fn) => {
   };
 };
 
+
 /**
  * 缓存函数，新建空对象，如果对象中存在某个值，返回对应的值，
  * 否则，使用新的输入作为key，fn的结果作为value，存入对象中，提高效率
@@ -154,4 +155,65 @@ export const once = (fn) => {
 export const memoized = (fn) => {
   const lookUpTable = {};
   return (arg) => lookUpTable[arg] || (lookUpTable[arg] = fn(arg));
+};
+
+
+/**
+ * 防抖和节流
+ * 相同:在不影响客户体验的前提下,将频繁的回调函数,进行次数缩减.避免大量计算导致的页面卡顿.
+ * 不同:防抖是将多次执行变为最后一次执行，节流是将多次执行变为在规定时间内只执行一次.
+ */
+
+
+/**
+ * 防抖（窗口的resize、scroll，输入框内容校验）---当持续触发事件时，debounce 会合并事件且不会去触发事件，当一定时间内没有触发再这个事件时，才真正去触发事件
+ * 常见应用：输入框内容校验；按钮点击（收藏，点赞）
+ * @param fn  需要执行的函数
+ * @param delay  延迟执行的时间
+ * @param immediate true 表立即执行，false 表非立即执行
+ * @returns {Function}
+ */
+export const debounce = (fn, delay, immediate) => {
+  let timeout = null;
+  return function() {
+    let context = this;
+    let args = arguments;
+    if (!timeout) clearTimeout(timeout);
+    if (immediate) {
+      let callNow = !timeout;
+      timeout = setTimeout(() => {
+        timeout = null;
+      }, delay);
+      if (callNow) fn.apply(context, args);
+    } else {
+      timeout = setTimeout(() => {
+        fn.apply(context, args);
+      }, delay);
+    }
+  };
+};
+
+/**
+ * 节流（窗口的resize、scroll，输入框内容校验）---当第一次触发事件时马上执行事件处理函数，最后一次触发事件后也还会执行一次事件处理函数
+ *  常见应用场景：监听滚动事件，是否滑倒底部自动加载更多
+ * @param fn  执行的函数
+ * @param delay 延迟时间
+ * @returns {Function}
+ */
+export const throttle = (fn, delay) => {
+  let timer = null;
+  let startTime = Date.now();
+  return function() {
+    let curTime = Date.now();
+    let remaining = delay - (curTime - startTime);
+    let context = this;
+    let args = arguments;
+    clearTimeout(timer);
+    if (remaining <= 0) {
+      fn.apply(context, args);
+      startTime = Date.now();
+    } else {
+      timer = setTimeout(fn, remaining);
+    }
+  };
 };
