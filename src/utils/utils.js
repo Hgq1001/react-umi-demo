@@ -122,15 +122,69 @@ export const sortBy = (property) => {
 };
 
 /**
- * 接受一个value参数，并返回一个包含value的闭包函数，该函数将被执行
- * @param value 传入的数据
- * @param fn  调用参数为value的闭包函数
- * @returns {function(*): (boolean|*)}
+ * Array.map 方法
+ * @param array 数组
+ * @param fn 回调函数，
+ * @returns {Array}
  */
-export const tap = (value) =>
-  (fn) => (
-    typeof(fn) === 'function' && fn(value)
-  );
+export const map = (array, fn) => {
+  let results = [];
+  for (const value of array) {
+    results.push(fn(value));
+  }
+  return results;
+};
+
+/**
+ * Array.filter 方法
+ * @param array 数组
+ * @param fn 回调函数 返回boolean
+ * @returns {Array}
+ */
+export const filter = (array, fn) => {
+  let results = [];
+  for (const value of array) {
+    fn(value) && results.push(value);
+  }
+  return results;
+};
+
+/**
+ * 多维数组变为1维数组
+ * @param array 数组
+ * @returns {*[]}
+ */
+export const flatten = (array) => {
+  return [].concat(...array.map(x => Array.isArray(x) ? flatten(x) : x));
+};
+
+/**
+ * Array.reduce
+ * @param array 数组
+ * @param fn 回调函数
+ * @param initialValue 累加器的初始值
+ * @returns {*}
+ */
+export const reduce = (array, fn, initialValue) => {
+  let accumlator;
+  if (initialValue !== undefined) {
+    accumlator = initialValue;
+  } else {
+    accumlator = array[0];
+  }
+
+  if (initialValue === undefined) {
+    for (let i = 1; i < array.length; i++) {
+      accumlator = fn(accumlator, array[i]);
+    }
+  } else {
+    for (const value of array) {
+      accumlator = fn(accumlator, value);
+    }
+  }
+
+  return accumlator;
+};
 
 /**
  * 让某个函数只执行一次，如支付请求，
@@ -155,3 +209,105 @@ export const memoized = (fn) => {
   const lookUpTable = {};
   return (arg) => lookUpTable[arg] || (lookUpTable[arg] = fn(arg));
 };
+
+/**
+ * 防抖：指触发事件后在规定时间内回调函数只能执行一次，如果在规定时间内又触发了该事件，则会重新开始算规定时间。
+ * 带有立即执行选项的防抖函数
+ * @param fun 执行的函数
+ * @param delay 延迟时间
+ * @param immediate 是否立即执行
+ * @returns {Function}
+ */
+export const debounce = (fun, delay = 500, immediate = true) => {
+  let timer = null; //保存定时器
+  return function(args) {
+    let that = this;
+    let _args = args;
+    if (timer) clearTimeout(timer);  //不管是否立即执行都需要首先清空定时器
+    if (immediate) {
+      if (!timer) fun.apply(that, _args);  //如果定时器不存在,则说明延时已过,可以立即执行函数
+      //不管上一个延时是否完成,都需要重置定时器
+      timer = setTimeout(function() {
+        timer = null; //到时间后,定时器自动设为null,不仅方便判断定时器状态还能避免内存泄露
+      }, delay);
+    }
+    else {
+      //如果是非立即执行版,则重新设定定时器,并将回调函数放入其中
+      timer = setTimeout(function() {
+        fun.call(that, _args);
+      }, delay);
+    }
+  };
+};
+
+/**
+ * 节流：当持续触发事件时，在规定时间段内只能调用一次回调函数。如果在规定时间内又触发了该事件，则什么也不做,也不会重置定时器.
+ * 时间戳+定时器版: 实现第一次触发可以立即响应,结束触发后也能有响应 (该版才是最符合实际工作需求)
+ * @param fun
+ * @param delay
+ * @returns {Function}
+ */
+export const throttle = (fun, delay = 500) => {
+  let timer = null;
+  let previous = 0;
+  return function(args) {
+    let now = Date.now();
+    let remaining = delay - (now - previous); //距离规定时间,还剩多少时间
+    let that = this;
+    let _args = args;
+    clearTimeout(timer);  //清除之前设置的定时器
+    if (remaining <= 0) {
+      fun.apply(that, _args);
+      previous = Date.now();
+    } else {
+      timer = setTimeout(function() {
+        fun.apply(that, _args);
+      }, remaining); //因为上面添加的clearTimeout.实际这个定时器只有最后一次才会执行
+    }
+  };
+};
+
+/**
+ * 柯里化函数
+ * @param fn 传入的函数
+ * @returns {curriedFn}
+ */
+export const curry = (fn) => {
+  /*检验fn是否是函数，如果不是，则抛出异常*/
+  if (typeof fn !== 'function') {
+    throw Error('No Function Provided');
+  }
+
+  return function curriedFn(...args) {
+    /*检查通过args传入的参数长度是否小于函数参数列表的长度，如果小于，则使用apply函数递归调用curriedFn*/
+    if (args.length < fn.length) {
+      return function() {
+        return curriedFn.apply(null, args.concat([].slice.call(arguments)));
+      };
+    }
+    return fn.apply(null, args);
+  };
+};
+
+/**
+ * 组合与管道---把每个函数的输出作为输入传给另一个函数
+ * 组合：右侧的函数最先执行，把输出作为下一个函数的输入，
+ * 管道：左侧的函数最先执行，把输出作为下一个函数的输入
+ * @param fns 传入的函数
+ * @returns {function(*=): *}
+ */
+// export const compose = (...fns) => (value) => reduce(fns.reverse(), (acc, fn) => fn(acc), value);
+export const piep = (...fns) => (value) => reduce(fns, (acc, fn) => fn(acc), value);
+
+export const compose = (...fns) => {
+  if (fns.length === 0) {
+    return arg => arg;
+  }
+
+  if (fns.length === 1) {
+    return fns[0];
+  }
+
+  return fns.reduce((a, b) => (...args) => a(b(...args)));
+};
+
