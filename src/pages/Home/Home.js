@@ -48,7 +48,7 @@ const Home = ({ dispatch, calendarModel }) => {
       }}>
         {utils.getDate()}
       </Button>
-      {calendarVisible && <Calendar/>}
+      {/*{calendarVisible && <Calendar/>}*/}
     </div>
   );
 };

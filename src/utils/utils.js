@@ -165,6 +165,7 @@ export const flatten = (array) => {
  * @param initialValue 累加器的初始值
  * @returns {*}
  */
+
 export const reduce = (array, fn, initialValue) => {
   let accumlator;
   if (initialValue !== undefined) {
@@ -198,6 +199,7 @@ export const once = (fn) => {
   };
 };
 
+
 /**
  * 缓存函数，新建空对象，如果对象中存在某个值，返回对应的值，
  * 否则，使用新的输入作为key，fn的结果作为value，存入对象中，提高效率
@@ -210,31 +212,37 @@ export const memoized = (fn) => {
   return (arg) => lookUpTable[arg] || (lookUpTable[arg] = fn(arg));
 };
 
+
 /**
- * 防抖：指触发事件后在规定时间内回调函数只能执行一次，如果在规定时间内又触发了该事件，则会重新开始算规定时间。
- * 带有立即执行选项的防抖函数
- * @param fun 执行的函数
- * @param delay 延迟时间
- * @param immediate 是否立即执行
+ * 防抖和节流
+ * 相同:在不影响客户体验的前提下,将频繁的回调函数,进行次数缩减.避免大量计算导致的页面卡顿.
+ * 不同:防抖是将多次执行变为最后一次执行，节流是将多次执行变为在规定时间内只执行一次.
+ */
+
+
+/**
+ * 防抖（窗口的resize、scroll，输入框内容校验）---当持续触发事件时，debounce 会合并事件且不会去触发事件，当一定时间内没有触发再这个事件时，才真正去触发事件
+ * 常见应用：输入框内容校验；按钮点击（收藏，点赞）
+ * @param fn  需要执行的函数
+ * @param delay  延迟执行的时间
+ * @param immediate true 表立即执行，false 表非立即执行
  * @returns {Function}
  */
-export const debounce = (fun, delay = 500, immediate = true) => {
-  let timer = null; //保存定时器
-  return function(args) {
-    let that = this;
-    let _args = args;
-    if (timer) clearTimeout(timer);  //不管是否立即执行都需要首先清空定时器
+export const debounce = (fn, delay, immediate) => {
+  let timeout = null;
+  return function() {
+    let context = this;
+    let args = arguments;
+    if (!timeout) clearTimeout(timeout);
     if (immediate) {
-      if (!timer) fun.apply(that, _args);  //如果定时器不存在,则说明延时已过,可以立即执行函数
-      //不管上一个延时是否完成,都需要重置定时器
-      timer = setTimeout(function() {
-        timer = null; //到时间后,定时器自动设为null,不仅方便判断定时器状态还能避免内存泄露
+      let callNow = !timeout;
+      timeout = setTimeout(() => {
+        timeout = null;
       }, delay);
-    }
-    else {
-      //如果是非立即执行版,则重新设定定时器,并将回调函数放入其中
-      timer = setTimeout(function() {
-        fun.call(that, _args);
+      if (callNow) fn.apply(context, args);
+    } else {
+      timeout = setTimeout(() => {
+        fn.apply(context, args);
       }, delay);
     }
   };
